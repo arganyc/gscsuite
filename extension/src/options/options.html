@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SearchSuite Settings</title>
+  <link rel="stylesheet" href="../popup/popup.css" />
+  <style>body { width: 560px; padding: 20px; }</style>
+</head>
+<body>
+  <h2>SearchSuite Settings</h2>
+  <label>Automation pacing between Google UI actions (ms)
+    <input type="number" id="gaDelay" min="1500" step="500" value="4000" />
+  </label>
+  <p class="hint">Lower values automate faster but increase the risk of Google flagging the account for bot-like behavior. 4000ms+ is a conservative default.</p>
+  <button id="save">Save</button>
+  <p id="saved" class="hint"></p>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
