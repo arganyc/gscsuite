@@ -44,6 +44,16 @@ const PLAN_DURATIONS_MS = {
   lifetime: null,
 };
 
+// Maps Stripe Price IDs (from the GSCSuite Payment Links created in the
+// Stripe Dashboard) to internal plan names. Price IDs aren't secret — they're
+// safe to hardcode here, same as they'd appear in client-side Checkout code.
+// Test-mode IDs today; swap in the live-mode equivalents when flipping live.
+const PRICE_ID_TO_PLAN = {
+  price_1U53sBAGs4FfkogRE6ZPIv3q: "day-pass", // GSCSuite Day Pass — $5 one-time
+  price_1U53u8AGs4FfkogRR6twvvEZ: "yearly", // GSCSuite Yearly — $29/year
+  price_1U53vIAGs4FfkogR2Ak2L1no: "lifetime", // GSCSuite Lifetime — $59 one-time
+};
+
 function issueLicense({ plan, email, stripeCustomerId }) {
   const key = `SS-${nanoid(4)}-${nanoid(4)}-${nanoid(4)}`.toUpperCase();
   const now = Date.now();
@@ -60,7 +70,7 @@ app.use(cors());
 
 // Stripe webhook needs the raw body for signature verification, so it's
 // registered before the global json() body parser below.
-app.post("/webhooks/stripe", express.raw({ type: "application/json" }), (req, res) => {
+app.post("/webhooks/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], WEBHOOK_SECRET);
@@ -70,8 +80,26 @@ app.post("/webhooks/stripe", express.raw({ type: "application/json" }), (req, re
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    // Map your Stripe Price IDs to plans here.
-    const plan = session.metadata?.plan || "yearly";
+
+    // Prefer metadata.plan if it was set (e.g. via the API), otherwise fall
+    // back to looking up the plan from the Price ID actually purchased —
+    // this is what the Payment Links created in the Dashboard rely on,
+    // since the Dashboard's Payment Link UI doesn't expose a metadata field.
+    let plan = session.metadata?.plan;
+    if (!plan) {
+      try {
+        const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 });
+        const priceId = lineItems.data[0]?.price?.id;
+        plan = PRICE_ID_TO_PLAN[priceId];
+      } catch (err) {
+        console.error("Failed to look up line items for session", session.id, err.message);
+      }
+    }
+    if (!plan) {
+      console.error(`Could not determine plan for session ${session.id}; defaulting to yearly`);
+      plan = "yearly";
+    }
+
     const key = issueLicense({
       plan,
       email: session.customer_details?.email,
