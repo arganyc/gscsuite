@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SearchSuite</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="../../icons/icon48.png" alt="" width="20" height="20" />
+      <span>SearchSuite</span>
+    </div>
+    <div class="plan-badge" id="planBadge">Free</div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="inspect">Bulk Inspect</button>
+    <button class="tab" data-tab="indexnow">Bing IndexNow</button>
+    <button class="tab" data-tab="google-actions">Google Index/Remove</button>
+    <button class="tab" data-tab="license">License</button>
+  </nav>
+
+  <main>
+    <section class="panel active" id="panel-dashboard">
+      <label>Property
+        <select id="siteSelect"><option>Loading properties…</option></select>
+      </label>
+      <div class="row">
+        <label>From <input type="date" id="dateFrom" /></label>
+        <label>To <input type="date" id="dateTo" /></label>
+        <button id="runQuery">Load stats</button>
+      </div>
+      <table class="stats-table" id="statsTable">
+        <thead><tr><th>Query</th><th>Clicks</th><th>Impr.</th><th>CTR</th><th>Position</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button id="exportCsv" disabled>Export CSV</button>
+    </section>
+
+    <section class="panel" id="panel-inspect">
+      <p class="hint">Official Google URL Inspection API — one row per URL, paced under quota.</p>
+      <textarea id="inspectUrls" placeholder="One URL per line…" rows="6"></textarea>
+      <button id="runInspect">Inspect URLs</button>
+      <div class="progress" id="inspectProgress"></div>
+      <ul class="results" id="inspectResults"></ul>
+    </section>
+
+    <section class="panel" id="panel-indexnow">
+      <p class="hint">Official IndexNow protocol — instant submission to Bing, Yandex, Naver, Seznam. Not used by Google.</p>
+      <label>Host <input type="text" id="inKeyHost" placeholder="example.com" /></label>
+      <label>IndexNow key <input type="text" id="inKeyValue" placeholder="generated key" readonly /></label>
+      <button id="genKey">Generate key</button>
+      <p class="hint">Host the generated key at <code id="keyFileHint">https://example.com/&lt;key&gt;.txt</code> before submitting.</p>
+      <textarea id="inUrls" placeholder="One URL per line…" rows="5"></textarea>
+      <button id="runIndexNow">Submit to IndexNow</button>
+      <div class="progress" id="inProgress"></div>
+    </section>
+
+    <section class="panel" id="panel-google-actions">
+      <div class="warning">
+        ⚠️ Unofficial. Automates the Search Console web UI in an open, logged-in
+        tab — there is no public Google API for this. Can break when Google
+        changes the UI, and carries a real risk of Google flagging automated
+        activity on the account. Use conservatively.
+      </div>
+      <textarea id="gaUrls" placeholder="One URL per line…" rows="5"></textarea>
+      <div class="row">
+        <button id="runRequestIndex">Request indexing</button>
+        <button id="runRemoveUrl" class="danger">Remove / block URLs</button>
+      </div>
+      <div class="progress" id="gaProgress"></div>
+      <ul class="results" id="gaResults"></ul>
+    </section>
+
+    <section class="panel" id="panel-license">
+      <label>License key
+        <input type="text" id="licenseKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX" />
+      </label>
+      <button id="activateLicense">Activate</button>
+      <p id="licenseStatus" class="hint"></p>
+      <a href="https://gscsuite.online/pricing.html" target="_blank">Don't have a key? Get one →</a>
+    </section>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
