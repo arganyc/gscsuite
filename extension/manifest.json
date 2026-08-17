@@ -3,6 +3,7 @@
   "name": "SearchSuite — GSC & Bing Bulk Toolkit",
   "short_name": "SearchSuite",
   "version": "0.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvVvewlOE2AdtXXgeQJyeR4INiGrxd5e9qFsdRg4giBvldHdKp7qzBExrre41CqztGlv4MN2PAm0gMv33q+3GexenrkUEfSXndXwVXfgkaAIxZvlyolg5qzhyFw+63rAAO6baQATv8Tblt8LSNokgsX00ts1t/btQ3pFdeTvTJDATFiFYpURZa0+ZNMpY01zsezILrCblVxv4I9nLSoVYUwefL4MM+MDxqbvkDvMQD96+ebQbn1e8aXP2rQs/nOqc+G4RPYyn6hY8mt3YBx1EUTUobIrN8lWN6DHBR+Paws4eV3H/fbaNRHsZzFK+BVY7/624v2uE4aTwdmsPR3y/dQIDAQAB",
   "description": "Bulk URL inspection, indexing, removal and reporting for Google Search Console and Bing Webmaster Tools.",
   "icons": {
     "16": "icons/icon16.png",
@@ -39,7 +40,7 @@
     "https://www.bing.com/*"
   ],
   "oauth2": {
-    "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "client_id": "939821183245-33g7jmlfap5brs9n0ogdgg2thrh5cnmb.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/webmasters",
       "https://www.googleapis.com/auth/webmasters.readonly"
