@@ -47,8 +47,17 @@ const PLAN_DURATIONS_MS = {
 // Maps Stripe Price IDs (from the GSCSuite Payment Links created in the
 // Stripe Dashboard) to internal plan names. Price IDs aren't secret — they're
 // safe to hardcode here, same as they'd appear in client-side Checkout code.
-// Test-mode IDs today; swap in the live-mode equivalents when flipping live.
+// Both live-mode and test-mode IDs are listed; Stripe never mixes the two
+// modes in a single session, so there's no ambiguity keeping both here —
+// this also means test mode keeps working if STRIPE_SECRET_KEY is ever
+// pointed back at a test key.
 const PRICE_ID_TO_PLAN = {
+  // Live mode
+  price_1U5DVTAGs4FfkogR1QmvJNb3: "day-pass", // GSCSuite Day Pass — $5 one-time
+  price_1U5DYeAGs4FfkogRGcUGdUAc: "yearly", // GSCSuite Yearly — $29/year
+  price_1U5DaXAGs4FfkogRPCNh4j28: "lifetime", // GSCSuite Lifetime — $59 one-time
+
+  // Test mode
   price_1U53sBAGs4FfkogRE6ZPIv3q: "day-pass", // GSCSuite Day Pass — $5 one-time
   price_1U53u8AGs4FfkogRR6twvvEZ: "yearly", // GSCSuite Yearly — $29/year
   price_1U53vIAGs4FfkogR2Ak2L1no: "lifetime", // GSCSuite Lifetime — $59 one-time
