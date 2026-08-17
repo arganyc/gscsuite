@@ -18,6 +18,8 @@ import { nanoid } from "nanoid";
 const PORT = process.env.PORT || 4242;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder");
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "whsec_placeholder";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const EMAIL_FROM = process.env.EMAIL_FROM || "GSCSuite <licenses@gscsuite.online>";
 
 const db = new Database("licenses.db");
 db.exec(`
@@ -74,6 +76,63 @@ function issueLicense({ plan, email, stripeCustomerId }) {
   return key;
 }
 
+const PLAN_LABELS = {
+  "day-pass": "Day Pass (24 hours)",
+  yearly: "Yearly",
+  lifetime: "Lifetime",
+};
+
+// Sends the license key to the customer via Resend (https://resend.com).
+// Skips silently (with a log line) if RESEND_API_KEY isn't configured yet,
+// so the webhook keeps working even before email delivery is set up.
+// Failures here are caught by the caller and never break license issuance —
+// the key is already saved in the database regardless of whether the email
+// goes out, so a delivery failure never means a paying customer gets nothing
+// permanently; it can be resent by hand from the licenses table if needed.
+async function sendLicenseEmail({ email, key, plan }) {
+  if (!RESEND_API_KEY) {
+    console.warn(`RESEND_API_KEY not set — skipping email to ${email} for license ${key}`);
+    return;
+  }
+  if (!email) {
+    console.warn(`No customer email on session for license ${key} — cannot send`);
+    return;
+  }
+
+  const planLabel = PLAN_LABELS[plan] || plan;
+  const html = `
+    <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="margin-bottom: 4px;">Thanks for getting GSCSuite!</h2>
+      <p style="color: #444;">Your plan: <strong>${planLabel}</strong></p>
+      <p style="color: #444;">Here's your license key — paste it into the extension's License tab to activate:</p>
+      <div style="font-family: monospace; font-size: 18px; font-weight: bold; background: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 8px; padding: 16px; text-align: center; letter-spacing: 1px; margin: 16px 0;">
+        ${key}
+      </div>
+      <p style="color: #666; font-size: 14px;">Don't have the extension yet? Install it from the Chrome Web Store, then open the License tab and paste this key in.</p>
+      <p style="color: #666; font-size: 14px;">Questions? Just reply to this email or reach us at hello@gscsuite.online.</p>
+    </div>
+  `;
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Your GSCSuite license key",
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Resend API returned ${res.status}: ${body}`);
+  }
+}
+
 const app = express();
 app.use(cors());
 
@@ -109,14 +168,22 @@ app.post("/webhooks/stripe", express.raw({ type: "application/json" }), async (r
       plan = "yearly";
     }
 
+    const email = session.customer_details?.email;
     const key = issueLicense({
       plan,
-      email: session.customer_details?.email,
+      email,
       stripeCustomerId: session.customer,
     });
-    // In production: email the key to the customer (Stripe Checkout can
-    // also just redirect to a success page that displays it once).
-    console.log(`Issued license ${key} (${plan}) for ${session.customer_details?.email}`);
+    console.log(`Issued license ${key} (${plan}) for ${email}`);
+
+    try {
+      await sendLicenseEmail({ email, key, plan });
+      console.log(`Emailed license ${key} to ${email}`);
+    } catch (err) {
+      // The license is already saved above regardless of email outcome —
+      // log and move on so a Resend/network hiccup never fails the webhook.
+      console.error(`Failed to email license ${key} to ${email}:`, err.message);
+    }
   }
 
   res.json({ received: true });
